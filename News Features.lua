@@ -46,13 +46,13 @@ local function loadLibsAndFont()
 
         local fontFlag = require("moonloader").font_flag
         local renderFont = renderCreateFont(set.AdmodRenderSettings.Font, set.AdmodRenderSettings.Size, 4 + 1 + 8)
-        return sampev, inicfg, direction, set, renderFont
+        return inicfg, direction, set, renderFont
     end
     return nil
 end
 
 if loadLibsAndFont() ~= nil then
-    local sampev, inicfg, direction, set, renderFont = loadLibsAndFont()
+    local inicfg, direction, set, renderFont = loadLibsAndFont()
 
     function main()
         while not isSampAvailable() do wait(100) end
@@ -91,10 +91,8 @@ if loadLibsAndFont() ~= nil then
         repeat
             wait(0)
         until sampIsLocalPlayerSpawned() and isPlayerOnTrinity()
-
         mainRender()
         wait(-1)
-
     end
 
     function isPlayerOnTrinity()
@@ -114,7 +112,6 @@ if loadLibsAndFont() ~= nil then
                 if set.AdmodRenderSettings.RenderAllAds then renderText = renderText.."За всё время: {87CEEB}"..set.Statistics.AdsPerAllTime.."\n{FFFFFF}" end
                 if set.AdmodRenderSettings.RenderRejAds then renderText = renderText.."Отклонено: {87CEEB}"..adsRejCounter.."\n{FFFFFF}" end
                 if set.AdmodRenderSettings.RenderEarnedMoney then renderText = renderText.."Заработано: {33aa33}"..set.Statistics.Money.." $\n{FFFFFF}" end
-                --local renderText = cyr("ADMOD:\nЗа текущую сессию: {87CEEB}"..adsAccCounter.."\n{FFFFFF}За всё время: {87CEEB}"..set.Statistics.AdsPerAllTime.."{FFFFFF}\nОтклонено: {87CEEB}"..adsRejCounter.."{FFFFFF}\nЗаработано: {33aa33}"..set.Statistics.Money.." ${ffffff}")
                 renderFontDrawText(renderFont, cyr(renderText), set.AdmodRenderSettings.PosX, set.AdmodRenderSettings.PosY, 0xFFFFFFFF)
             end
             wait(0)
@@ -146,7 +143,9 @@ if loadLibsAndFont() ~= nil then
         end)
     end
 
+    local scriptDialogsWorking = false
     function showMenu()
+        scriptDialogsWorking = true
         local boolShowMenu = true
         lua_thread.create(function()
             local show6409 = false
@@ -365,7 +364,9 @@ if loadLibsAndFont() ~= nil then
                                 end
                             end
                         else
-                            sampCloseCurrentDialogWithButton(0); boolShowMenu = false
+                            sampCloseCurrentDialogWithButton(0)
+                            boolShowMenu = false
+                            scriptDialogsWorking = false
                         end
                     end
                 end
@@ -374,107 +375,112 @@ if loadLibsAndFont() ~= nil then
         end)
     end
 
-    if loadLibsAndFont() ~= nil then
-        local sampev = require("lib.samp.events")
-        function sampev.onServerMessage(color, text)
-            --[[local f = io.open("moonloader//dialogDump.txt", "a")
-            f:write(text)
-            f:close()]]
-
-            if isPlayerOnTrinity() and color == -290866945 then
-                if set.AdSettings.AutoAdmod and text:find(cyr("На модерацию поступило новое объявление%. .+")) and not isGamePaused() then 
-                    if not sampIsDialogActive() then 
-                        sampSendChat("/admod")
-                    else 
-                        sampAddChatMessage(cyr("Автоматический /admod отклонен, открыто другое диалоговое окно."), -1) 
+    local sampev = require "lib.samp.events"
+    function sampev.onServerMessage(color, text)
+        if isPlayerOnTrinity() and color == -290866945 then
+            if set.AdSettings.AutoAdmod and text:find(cyr("На модерацию поступило новое объявление%. .+")) and not isGamePaused() then 
+                if not sampIsDialogActive() then 
+                    sampSendChat("/admod")
+                else
+                    -- local noAdmodInputIds = {3420, 3422, 3423, 3425, 3421}
+                    local AdmodInfo = true
+                    for _, v in pairs({3420, 3422, 3423, 3425, 3421}) do
+                        if sampGetCurrentDialogId() == v then
+                            noAdmodInfo = false; break
+                        end
                     end
-                elseif set.MessageSettings.IgnoringStateAdvertising and text:find(cyr("^%[Гос. реклама%].+")) then return false
-                elseif set.MessageSettings.IgnoringRegularAdvertising and text:find(cyr("^%[Реклама %a+%].+")) then return false
-                elseif set.MessageSettings.IgnoringRadioBroadcasts and text:find(cyr("^%[Радио %a+%] .+")) then return false
-                elseif set.MessageSettings.IgnoringNotifications and text:find(cyr("На модерацию поступило новое объявление%. .+")) then return false 
+                    if noAdmodInfo and not scriptDialogsWorking then
+                        sampAddChatMessage(cyr("Автоматический /admod отклонен, открыто другое диалоговое окно."), -1)
+                    end
                 end
+            elseif set.MessageSettings.IgnoringStateAdvertising and text:find(cyr("^%[Гос. реклама%].+")) then return false
+            elseif set.MessageSettings.IgnoringRegularAdvertising and text:find(cyr("^%[Реклама %a+%].+")) then return false
+            elseif set.MessageSettings.IgnoringRadioBroadcasts and text:find(cyr("^%[Радио %a+%] .+")) then return false
+            elseif set.MessageSettings.IgnoringNotifications and text:find(cyr("На модерацию поступило новое объявление%. .+")) then return false 
             end
         end
+    end
 
-        function sampev.onShowDialog(id, style, _, b1, b2, text)
-            if isPlayerOnTrinity() then
-                if set.AdSettings.AdTextInDialogBox and id == 3423 and style == 1 and b1 == cyr("Отправить") and b2 == cyr("Назад") then
-                    if text:find(cyr("{ffffff}Текст:{abcdef} .+{ffffff}")) then
-                        local textDialog = text:match(cyr("{ffffff}Текст:{abcdef} (.+){ffffff}"))
-                        lua_thread.create(function()
-                            repeat
-                                local result = sampIsDialogActive(); wait(0)
-                            until result
-                            sampSetCurrentDialogEditboxText(textDialog)
-                        end)
-                    end
-                elseif id == 3421 and text:find(cyr("^Объявление успешно отредактировано и отправлено в очередь на публикацию%.$")) then
-                    set.Statistics.AdsPerAllTime = set.Statistics.AdsPerAllTime + 1
-                    set.Statistics.Money = set.Statistics.Money + 2; inicfg.save(set, direction)
-                    adsAccCounter = adsAccCounter + 1
+    function sampev.onShowDialog(id, style, _, b1, b2, text)
+        -- print(id, text) 3420, 3422, 3423, 3425, 3421
+        if isPlayerOnTrinity() then
+            if set.AdSettings.AdTextInDialogBox and id == 3423 and style == 1 and b1 == cyr("Отправить") and b2 == cyr("Назад") then
+                if text:find(cyr("{ffffff}Текст:{abcdef} .+{ffffff}")) then
+                    local textDialog = text:match(cyr("{ffffff}Текст:{abcdef} (.+){ffffff}"))
+                    lua_thread.create(function()
+                        repeat
+                            local result = sampIsDialogActive(); wait(0)
+                        until result
+                        sampSetCurrentDialogEditboxText(textDialog)
+                    end)
                 end
+            elseif id == 3421 and text:find(cyr("^Объявление успешно отредактировано и отправлено в очередь на публикацию%.$")) then
+                set.Statistics.AdsPerAllTime = set.Statistics.AdsPerAllTime + 1
+                set.Statistics.Money = set.Statistics.Money + 2; inicfg.save(set, direction)
+                adsAccCounter = adsAccCounter + 1
             end
         end
+    end
 
-        function sampev.onSendDialogResponse(id, button, list, _)
-            --print(id, button, list)
-            if id == 3420 and button == 1 then
+    function sampev.onSendDialogResponse(id, button, list)
+        if (id == 3420 or id == 3425) and button == 1 then
             set.Statistics.AdsPerAllTime = set.Statistics.AdsPerAllTime + 1
             set.Statistics.Money = set.Statistics.Money + 2; inicfg.save(set, direction)
             adsAccCounter = adsAccCounter + 1
-            elseif id == 3422 and button == 1 and list == 0 then
+        elseif id == 3422 and button == 1 and list == 0 then
             adsRejCounter = adsRejCounter + 1
-            end
         end
+    end
 
-        function autoupdate(json_url, prefix, url)
-            local dlstatus = require("moonloader").download_status
-            local json = getWorkingDirectory() .. "\\"..thisScript().name.."-version.json"
-            if doesFileExist(json) then os.remove(json) end
+    function autoupdate(json_url, prefix, url)
+        local dlstatus = require("moonloader").download_status
+        local json = getWorkingDirectory() .. "\\"..thisScript().name.."-version.json"
+        if doesFileExist(json) then os.remove(json) end
 
-            downloadUrlToFile(json_url, json, function(id, status, p1, p2)
-                if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-                    if doesFileExist(json) then
-                        local f = io.open(json, "r")
-                        if f then
-                            local info = decodeJson(f:read("*a"))
-                            updatelink = info.updateurl
-                            updateversion = info.latest
-                            f:close()
-                            os.remove(json)
-                            if updateversion ~= thisScript().version then
-                                lua_thread.create(function(prefix)
-                                    local dlstatus = require("moonloader").download_status
-                                    local color = -1
-                                    sampAddChatMessage(cyr((prefix.."Обнаружено обновление. Попытка обновить версию с "..thisScript().version.." на "..updateversion..".")), color)
-                                    wait(250)
-                                    downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
-                                        if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
-                                            sampAddChatMessage(cyr(string.format("Загружено %d из %d.", p13, p23)), -1)
-                                        elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                                            sampAddChatMessage(cyr((prefix.."Обновление завершено!")), color)
-                                            goupdatestatus = true
-                                            lua_thread.create(function() wait(500) thisScript():reload() end)
-                                        elseif status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
-                                            if goupdatestatus == nil then
-                                                sampAddChatMessage(cyr((prefix.." Обновление прошло неудачно.")), -1)
-                                                update = false
-                                            end
+        downloadUrlToFile(json_url, json, function(id, status, p1, p2)
+            if status == dlstatus.STATUSEX_ENDDOWNLOAD then
+                if doesFileExist(json) then
+                    local f = io.open(json, "r")
+                    if f then
+                        local info = decodeJson(f:read("*a"))
+                        updatelink = info.updateurl
+                        updateversion = info.latest
+                        f:close()
+                        os.remove(json)
+                        if updateversion ~= thisScript().version then
+                            lua_thread.create(function(prefix)
+                                local dlstatus = require("moonloader").download_status
+                                local color = -1
+                                sampAddChatMessage(cyr((prefix.."Обнаружено обновление. Попытка обновить версию с "..thisScript().version.." на "..updateversion..".")), color)
+                                wait(250)
+                                downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
+                                    if status1 == dlstatus.STATUS_DOWNLOADINGDATA then
+                                        sampAddChatMessage(cyr(string.format("Загружено %d из %d.", p13, p23)), -1)
+                                    elseif status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
+                                        sampAddChatMessage(cyr((prefix.."Обновление завершено!")), color)
+                                        goupdatestatus = true
+                                        lua_thread.create(function() wait(500) thisScript():reload() end)
+                                    elseif status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
+                                        if goupdatestatus == nil then
+                                            sampAddChatMessage(cyr((prefix.." Обновление прошло неудачно.")), -1)
+                                            update = false
                                         end
-                                    end)
-                                end, prefix)
-                            else
-                                update = false
-                                sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – обновление не требуется."), -1)
-                            end
+                                    end
+                                end)
+                            end, prefix)
+                        else
+                            update = false
+                            sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – обновление не требуется."), -1)
                         end
-                    else
-                        sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – не получилось обработать информацию о новых обновлениях."..url), -1)
-                        update = false
-                    end -- does file exist
-                end -- status == dlstatus.STATUSEX_ENDDOWNLOAD
-            end) -- function in download
-            while update ~= false do wait(100) end
+                    end
+                else
+                    sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – не получилось обработать информацию о новых обновлениях."..url), -1)
+                    update = false
+                end -- does file exist
+            end -- status == dlstatus.STATUSEX_ENDDOWNLOAD
+        end) -- function in download
+        while update ~= false do 
+            wait(100) 
         end
     end
 else
