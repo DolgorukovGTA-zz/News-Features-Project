@@ -7,7 +7,6 @@ if isSampLoaded() and isSampfuncsLoaded() then
     encoding.default = "UTF-8"
     cyr = encoding.CP1251
     
-
     local sampev = require "lib.samp.events"
     local inicfg = require "inicfg"
     local direction = "News Features Settings.ini"
@@ -136,30 +135,29 @@ if isSampLoaded() and isSampfuncsLoaded() then
         wait(-1)
     end
 
-    local scriptDialogsWorking = false
+    local is_script_dialogs_working = false
     function showMenu()
-        scriptDialogsWorking = true
-        local boolShowMenu = true
+        is_script_dialogs_working = true
+        local show_main_dialog = true
         lua_thread.create(function()
-            local show6409 = false
+            local show_dialog_6409 = false
             while true do
-                if boolShowMenu then
+                if show_main_dialog then
                     local dialogText = cyr("{87CEEB}1.{FFFFFF} Отображение сообщений\n{87CEEB}2.{FFFFFF} Работа с объявлениями\n{87CEEB}3.{FFFFFF} Отредактированные объявления\n{87CEEB}4.{FFFFFF} ADMOD-рендер")
                     sampShowDialog(6405, cyr("{87CEEB}News — Главное меню{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Отмена"), 2)
                     while sampIsDialogActive(6405) do wait(100) end
                     local result, button, list, _ = sampHasDialogRespond(6405)
                     if result then
                         if button == 1 then
-                            boolShowMenu = false
-                            if list == 0 then
-                                while not boolShowMenu do
-                                    local renderStatus = {}
-                                    renderStatus[1] = set.MessageSettings.IgnoringStateAdvertising and "{33aa33}[ON]" or "{ff6347}[OFF]"
-                                    renderStatus[2] = set.MessageSettings.IgnoringRegularAdvertising and "{33aa33}[ON]" or "{ff6347}[OFF]"
-                                    renderStatus[3] = set.MessageSettings.IgnoringRadioBroadcasts and "{33aa33}[ON]" or "{ff6347}[OFF]"
-                                    renderStatus[4] = set.MessageSettings.IgnoringNotifications and "{33aa33}[ON]" or "{ff6347}[OFF]"
-
-                                    local dialogText = cyr("{87CEEB}1.{FFFFFF} Игнорирование гос.рекламы\t\t\t\t"..renderStatus[1].."{ffffff}\n{87CEEB}2.{FFFFFF} Игнорирование рекламы US, AF, RC\t\t\t"..renderStatus[2].."\n{87CEEB}3.{FFFFFF} Игнорирование радиоэфиров\t\t\t\t"..renderStatus[3].."\n{87CEEB}4.{FFFFFF} Игнорирование уведомлений о новых объявлениях\t"..renderStatus[4])
+                            show_main_dialog = false
+                            while not show_main_dialog do
+                                if list == 0 then
+                                    local render_info = {}
+                                    render_info[1] = set.MessageSettings.IgnoringStateAdvertising and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                    render_info[2] = set.MessageSettings.IgnoringRegularAdvertising and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                    render_info[3] = set.MessageSettings.IgnoringRadioBroadcasts and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                    render_info[4] = set.MessageSettings.IgnoringNotifications and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                    local dialogText = cyr("{87CEEB}1.{FFFFFF} Игнорирование гос.рекламы\t\t\t\t"..render_info[1].."{ffffff}\n{87CEEB}2.{FFFFFF} Игнорирование рекламы US, AF, RC\t\t\t"..render_info[2].."\n{87CEEB}3.{FFFFFF} Игнорирование радиоэфиров\t\t\t\t"..render_info[3].."\n{87CEEB}4.{FFFFFF} Игнорирование уведомлений о новых объявлениях\t"..render_info[4])
                                     sampShowDialog(6406, cyr("{87CEEB}News — Отображение сообщений{FFFFFF}"), dialogText, cyr("ОК"), cyr("Отмена"), DIALOG_STYLE_LIST)
                                     while sampIsDialogActive(6406) do wait(100) end
                                     local result, button, list, _ = sampHasDialogRespond(6406)
@@ -170,18 +168,15 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                             elseif list == 2 then set.MessageSettings.IgnoringRadioBroadcasts = not set.MessageSettings.IgnoringRadioBroadcasts; inicfg.save(set, direction)
                                             elseif list == 3 then set.MessageSettings.IgnoringNotifications = not set.MessageSettings.IgnoringNotifications; inicfg.save(set, direction) 
                                             end
-                                        else sampCloseCurrentDialogWithButton(0); boolShowMenu = true 
+                                        else sampCloseCurrentDialogWithButton(0); show_main_dialog = true 
                                         end
                                     end
-                                end
-                            elseif list == 1 then
-                                while not boolShowMenu do
+                                elseif list == 1 then
+                                    local render_info = {}
+                                    render_info[1] = set.AdSettings.AutoAdmod and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                    render_info[2] = set.AdSettings.AdTextInDialogBox and "{33aa33}[ON]" or "{ff6347}[OFF]"
 
-                                    local renderStatus = {}
-                                    renderStatus[1] = set.AdSettings.AutoAdmod and "{33aa33}[ON]" or "{ff6347}[OFF]"
-                                    renderStatus[2] = set.AdSettings.AdTextInDialogBox and "{33aa33}[ON]" or "{ff6347}[OFF]"
-
-                                    local dialogText = cyr("{87CEEB}1.{FFFFFF} Автоматический /admod\t\t\t\t"..renderStatus[1].."\n{87CEEB}2.{FFFFFF} Текст объявления в поле диалога \t\t"..renderStatus[2])
+                                    local dialogText = cyr("{87CEEB}1.{FFFFFF} Автоматический /admod\t\t\t\t"..render_info[1].."\n{87CEEB}2.{FFFFFF} Текст объявления в поле диалога \t\t"..render_info[2])
                                     sampShowDialog(6407, cyr("{87CEEB}News — Работа с объявлениями{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Назад"), 2)
                                     while sampIsDialogActive(6407) do wait(100) end
                                     local result, button, list, _ = sampHasDialogRespond(6407)
@@ -192,12 +187,10 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                             end
                                         else
                                             sampCloseCurrentDialogWithButton(0)
-                                            boolShowMenu = true
+                                            show_main_dialog = true
                                         end
                                     end
-                                end
-                            elseif list == 2 then
-                                while not boolShowMenu do
+                                elseif list == 2 then
                                     local dialogText = cyr("{FFFFFF}За текущую сессию: "..ads_acc_counter.."\nЗа всё время: "..set.Statistics.AdsPerAllTime.."\nОтклонено: "..ads_rej_counter.."\nЗаработано средств: {33aa33}"..set.Statistics.Money.." ${ffffff}")
                                     sampShowDialog(6408, cyr("{87CEEB}News — /admod{FFFFFF}"), dialogText, cyr("Сбросить"), cyr("Назад"), 0)
                                     while sampIsDialogActive(6408) do wait(100) end
@@ -222,140 +215,141 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                             end
                                             sampCloseCurrentDialogWithButton(0)
                                         else
-                                            sampCloseCurrentDialogWithButton(0); boolShowMenu = true
+                                            sampCloseCurrentDialogWithButton(0); show_main_dialog = true
                                         end
                                     end
-                                end
-                            elseif list == 3 then
-                                while not boolShowMenu or show6409 do
+                                elseif list == 3 then
+                                    while not show_main_dialog or show_dialog_6409 do
+                                        local render_info = {}
+                                        render_info[1] = set.AdmodRenderSettings.Status and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                        render_info[2] = set.AdmodRenderSettings.Font
+                                        render_info[3] = set.AdmodRenderSettings.Size
 
-                                    local renderStatus = {}
-                                    renderStatus[1] = set.AdmodRenderSettings.Status and "{33aa33}[ON]" or "{ff6347}[OFF]"
-                                    renderStatus[2] = set.AdmodRenderSettings.Font
-                                    renderStatus[3] = set.AdmodRenderSettings.Size
-
-                                    local dialogText = cyr("{87CEEB}1.{FFFFFF} Состояние: "..renderStatus[1].."\n{87CEEB}2.{FFFFFF} Шрифт: {6495ED}"..renderStatus[2].."\n{87CEEB}3.{FFFFFF} Размер шрифта: {6495ED}"..renderStatus[3].."\n{87CEEB}4.{FFFFFF} Настройки содержимого")
-                                    sampShowDialog(6409, cyr("{87CEEB}News — ADMOD-рендер{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Назад"), 2)
-                                    while sampIsDialogActive(6409) do wait(100) end
-                                    local result, button, list, _ = sampHasDialogRespond(6409)
-                                    if result then
-                                        if button == 1 then
-                                            if list == 0 then
-                                                set.AdmodRenderSettings.Status = not set.AdmodRenderSettings.Status; inicfg.save(set, direction)
-                                            elseif list == 1 then
-                                                if set.AdmodRenderSettings.Status then
-                                                    local dialogText = cyr("{FFFFFF}Текущий шрифт: {6495ED}"..set.AdmodRenderSettings.Font.."{FFFFFF}.\n\nВведите название нового шрифта в поле диалога ниже,\nесли шрифт не поменяется, значит таковой отсутствует\nна Вашем компьютере.")
-                                                    sampShowDialog(6410, cyr("{87CEEB}News — Настройка шрифта{FFFFFF}"), dialogText, cyr("ОК"), cyr("Назад"), 1)
-                                                    while sampIsDialogActive(6410) do wait(100) end
-                                                    local result, button, _, input = sampHasDialogRespond(6410)
-                                                    if result then
-                                                        if button == 1 then
-                                                            if input ~= "" then
-                                                                if input:find("^.+[^%s]$") then
-                                                                    if not input:find("^%d+$") then
-                                                                        if input ~= set.AdmodRenderSettings.Font then
-                                                                            set.AdmodRenderSettings.Font = input; inicfg.save(set, direction)
-                                                                            renderFont = renderCreateFont(set.AdmodRenderSettings.Font, set.AdmodRenderSettings.Size, 4 + 1 + 8)
-                                                                        else
-                                                                            sampAddChatMessage(cyr("В текущий момент итак установлен шрифт "..input.."."), -1)
-                                                                        end
-                                                                    else
-                                                                        sampAddChatMessage(cyr("Название шрифта не может состоять только из цифр, здесь что-то не так. :thinking:"), -1)
-                                                                    end
-                                                                else
-                                                                    sampAddChatMessage(cyr("В названии шрифта присутствуют пробелы в конце, укажите наименование корректно."), -1)
-                                                                end
-                                                            else
-                                                                sampAddChatMessage(cyr("Вы ничего не ввели!"), -1)
-                                                            end
-                                                        else
-                                                            sampCloseCurrentDialogWithButton(0)
-                                                        end
-                                                    end
-                                                else
-                                                    sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
-                                                end
-                                            elseif list == 2 then
-                                                if set.AdmodRenderSettings.Status then
-                                                    local dialogText = cyr("{FFFFFF}Текущий размер шрифта: {6495ED}"..set.AdmodRenderSettings.Size.."{FFFFFF}.\nРазмер шрифта задаётся исключительно в целочисленном формате!")
-                                                    sampShowDialog(6411, cyr("{87CEEB}News — Настройка размера шрифта{FFFFFF}"), dialogText, cyr("ОК"), cyr("Назад"), 1)
-                                                    while sampIsDialogActive(6411) do wait(100) end
-                                                    local result, button, _, input = sampHasDialogRespond(6411)
-                                                    if result then
-                                                        if button == 1 then
-                                                            if input ~= "" then
-                                                                if input:find("^%d+$") then
-                                                                    local input = tonumber(input)
-                                                                    if input ~= set.AdmodRenderSettings.Size then
-                                                                        if input <= 45 then
-                                                                            if input ~= 0 then
-                                                                                if input >= 6 then
-                                                                                    set.AdmodRenderSettings.Size = input; inicfg.save(set, direction)
-                                                                                    renderFont = renderCreateFont(set.AdmodRenderSettings.Font, set.AdmodRenderSettings.Size, 4 + 1 + 8)
-                                                                                else
-                                                                                    sampAddChatMessage(cyr("Слишком маленький шрифт. «Глаза же испортишь, зрение нужно беречь с молодости» — (с) Мама."), -1)
-                                                                                end
-                                                                            else
-                                                                                sampAddChatMessage(cyr("Серьёзно? 0? Ты совсем сошёл с катушек?"), -1)
-                                                                            end
-                                                                        else
-                                                                            sampAddChatMessage(cyr("Такие большие масштабы нам ни к чему."), -1)
-                                                                        end
-                                                                    else
-                                                                        sampAddChatMessage(cyr("В текущий момент итак установлено данное значение ("..input..")."), -1)
-                                                                    end
-                                                                else
-                                                                    sampAddChatMessage(cyr("Данные введены в неверном формате или найдены несоответствующие символы."), -1)
-                                                                end
-                                                            else
-                                                                sampAddChatMessage(cyr("Вы ничего не ввели!"), -1)
-                                                            end
-                                                        else
-                                                            sampCloseCurrentDialogWithButton(0)
-                                                        end
-                                                    end
-                                                else
-                                                    sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
-                                                end
-                                            elseif list == 3 then
-                                                if set.AdmodRenderSettings.Status then
-                                                    while not show6409 do
-                                                        local renderStatus = {}
-                                                        if set.AdmodRenderSettings.RenderCurSessionAds then renderStatus[1] = "{33aa33}[ON]" else renderStatus[1] = "{ff6347}[OFF]" end
-                                                        if set.AdmodRenderSettings.RenderAllAds then renderStatus[2] = "{33aa33}[ON]" else renderStatus[2] = "{ff6347}[OFF]" end
-                                                        if set.AdmodRenderSettings.RenderRejAds then renderStatus[3] = "{33aa33}[ON]" else renderStatus[3] = "{ff6347}[OFF]" end
-                                                        if set.AdmodRenderSettings.RenderEarnedMoney then renderStatus[4] = "{33aa33}[ON]" else renderStatus[4] = "{ff6347}[OFF]" end
-
-                                                        local dialogText = cyr("Отображать количество объявлений, отредактированных за текущую сессию\t"..renderStatus[1].."\nОтображать количество объявлений, отредактированных за всё время\t\t"..renderStatus[2].."\nОтображать количество отклонённых объявлений\t\t\t\t\t"..renderStatus[3].."\nОтображать количество заработанных денег при помощи редакции\t\t\t"..renderStatus[4])
-                                                        sampShowDialog(6412, cyr("{87CEEB}News — Содержимое ADMOD-рендера{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Назад"), 2)
-                                                        while sampIsDialogActive(6412) do wait(100) end
-                                                        local result, button, list, _ = sampHasDialogRespond(6412)
+                                        local dialogText = cyr("{87CEEB}1.{FFFFFF} Состояние: "..render_info[1].."\n{87CEEB}2.{FFFFFF} Шрифт: {6495ED}"..render_info[2].."\n{87CEEB}3.{FFFFFF} Размер шрифта: {6495ED}"..render_info[3].."\n{87CEEB}4.{FFFFFF} Настройки содержимого")
+                                        sampShowDialog(6409, cyr("{87CEEB}News — ADMOD-рендер{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Назад"), 2)
+                                        while sampIsDialogActive(6409) do wait(100) end
+                                        local result, button, list, _ = sampHasDialogRespond(6409)
+                                        if result then
+                                            if button == 1 then
+                                                if list == 0 then
+                                                    set.AdmodRenderSettings.Status = not set.AdmodRenderSettings.Status; inicfg.save(set, direction)
+                                                elseif list == 1 then
+                                                    if set.AdmodRenderSettings.Status then
+                                                        local dialogText = cyr("{FFFFFF}Текущий шрифт: {6495ED}"..set.AdmodRenderSettings.Font.."{FFFFFF}.\n\nВведите название нового шрифта в поле диалога ниже,\nесли шрифт не поменяется, значит таковой отсутствует\nна Вашем компьютере.")
+                                                        sampShowDialog(6410, cyr("{87CEEB}News — Настройка шрифта{FFFFFF}"), dialogText, cyr("ОК"), cyr("Назад"), 1)
+                                                        while sampIsDialogActive(6410) do wait(100) end
+                                                        local result, button, _, input = sampHasDialogRespond(6410)
                                                         if result then
                                                             if button == 1 then
-                                                                if list == 0 then set.AdmodRenderSettings.RenderCurSessionAds = not set.AdmodRenderSettings.RenderCurSessionAds; inicfg.save(set, direction)
-                                                                elseif list == 1 then set.AdmodRenderSettings.RenderAllAds = not set.AdmodRenderSettings.RenderAllAds; inicfg.save(set, direction)
-                                                                elseif list == 2 then set.AdmodRenderSettings.RenderRejAds = not set.AdmodRenderSettings.RenderRejAds; inicfg.save(set, direction)
-                                                                elseif list == 3 then set.AdmodRenderSettings.RenderEarnedMoney = not set.AdmodRenderSettings.RenderEarnedMoney; inicfg.save(set, direction)
+                                                                if input ~= "" then
+                                                                    if input:find("^[^%s].+[^%s]$") then
+                                                                        if not input:find("^%d+$") then
+                                                                            if input ~= set.AdmodRenderSettings.Font then
+                                                                                set.AdmodRenderSettings.Font = input:gsub("[%./:%?%*%-%+%%%^%$]", ""); inicfg.save(set, direction)
+                                                                                renderFont = renderCreateFont(set.AdmodRenderSettings.Font, set.AdmodRenderSettings.Size, 4 + 1 + 8)
+                                                                            else
+                                                                                sampAddChatMessage(cyr("В текущий момент итак установлен шрифт "..input.."."), -1)
+                                                                            end
+                                                                        else
+                                                                            sampAddChatMessage(cyr("Название шрифта не может состоять только из цифр, здесь что-то не так. :thinking:"), -1)
+                                                                        end
+                                                                    else
+                                                                        sampAddChatMessage(cyr("В названии шрифта присутствуют некорректные символы, либо же в строке находятся лишние пробелы. Укажите наименование корректно."), -1)
+                                                                    end
+                                                                else
+                                                                    sampAddChatMessage(cyr("Вы ничего не ввели!"), -1)
                                                                 end
                                                             else
-                                                                sampCloseCurrentDialogWithButton(0); show6409 = true
+                                                                sampCloseCurrentDialogWithButton(0)
                                                             end
                                                         end
+                                                    else
+                                                        sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
                                                     end
-                                                else
-                                                    sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
+                                                elseif list == 2 then
+                                                    if set.AdmodRenderSettings.Status then
+                                                        local dialogText = cyr("{FFFFFF}Текущий размер шрифта: {6495ED}"..set.AdmodRenderSettings.Size.."{FFFFFF}.\nРазмер шрифта задаётся исключительно в целочисленном формате!")
+                                                        sampShowDialog(6411, cyr("{87CEEB}News — Настройка размера шрифта{FFFFFF}"), dialogText, cyr("ОК"), cyr("Назад"), 1)
+                                                        while sampIsDialogActive(6411) do wait(100) end
+                                                        local result, button, _, input = sampHasDialogRespond(6411)
+                                                        if result then
+                                                            if button == 1 then
+                                                                if input ~= "" then
+                                                                    if input:find("^%d+$") then
+                                                                        local input = tonumber(input)
+                                                                        if input ~= set.AdmodRenderSettings.Size then
+                                                                            if input <= 45 then
+                                                                                if input ~= 0 then
+                                                                                    if input >= 6 then
+                                                                                        set.AdmodRenderSettings.Size = input; inicfg.save(set, direction)
+                                                                                        renderFont = renderCreateFont(set.AdmodRenderSettings.Font, set.AdmodRenderSettings.Size, 4 + 1 + 8)
+                                                                                    else
+                                                                                        sampAddChatMessage(cyr("Слишком маленький шрифт. «Глаза же испортишь, зрение нужно беречь с молодости» — (с) Мама."), -1)
+                                                                                    end
+                                                                                else
+                                                                                    sampAddChatMessage(cyr("Серьёзно? 0? Ты совсем сошёл с катушек?"), -1)
+                                                                                end
+                                                                            else
+                                                                                sampAddChatMessage(cyr("Такие большие масштабы нам ни к чему."), -1)
+                                                                            end
+                                                                        else
+                                                                            sampAddChatMessage(cyr("В текущий момент итак установлено данное значение ("..input..")."), -1)
+                                                                        end
+                                                                    else
+                                                                        sampAddChatMessage(cyr("Данные введены в неверном формате или найдены несоответствующие символы."), -1)
+                                                                    end
+                                                                else
+                                                                    sampAddChatMessage(cyr("Вы ничего не ввели!"), -1)
+                                                                end
+                                                            else
+                                                                sampCloseCurrentDialogWithButton(0)
+                                                            end
+                                                        end
+                                                    else
+                                                        sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
+                                                    end
+                                                elseif list == 3 then
+                                                    if set.AdmodRenderSettings.Status then
+                                                        while not show_dialog_6409 do
+                                                            
+                                                            local render_info = {}
+                                                            render_info[1] = set.AdmodRenderSettings.RenderCurSessionAds and "{33aa33}[ON]" or "{ff6347}[OFF]" 
+                                                            render_info[2] = set.AdmodRenderSettings.RenderAllAds and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                                            render_info[3] = set.AdmodRenderSettings.RenderRejAds and "{33aa33}[ON]" or "{ff6347}[OFF]"
+                                                            render_info[4] = set.AdmodRenderSettings.RenderEarnedMoney and "{33aa33}[ON]" or "{ff6347}[OFF]"
+
+                                                            local dialogText = cyr("Отображать количество объявлений, отредактированных за текущую сессию\t\t"..render_info[1].."\nОтображать количество объявлений, отредактированных за всё время\t\t\t"..render_info[2].."\nОтображать количество отклонённых объявлений\t\t\t\t\t"..render_info[3].."\nОтображать количество заработанных денег при помощи редакции\t\t\t"..render_info[4])
+                                                            sampShowDialog(6412, cyr("{87CEEB}News — Содержимое ADMOD-рендера{FFFFFF}"), dialogText, cyr("Выбор"), cyr("Назад"), 2)
+                                                            while sampIsDialogActive(6412) do wait(100) end
+                                                            local result, button, list, _ = sampHasDialogRespond(6412)
+                                                            if result then
+                                                                if button == 1 then
+                                                                    if list == 0 then set.AdmodRenderSettings.RenderCurSessionAds = not set.AdmodRenderSettings.RenderCurSessionAds; inicfg.save(set, direction)
+                                                                    elseif list == 1 then set.AdmodRenderSettings.RenderAllAds = not set.AdmodRenderSettings.RenderAllAds; inicfg.save(set, direction)
+                                                                    elseif list == 2 then set.AdmodRenderSettings.RenderRejAds = not set.AdmodRenderSettings.RenderRejAds; inicfg.save(set, direction)
+                                                                    elseif list == 3 then set.AdmodRenderSettings.RenderEarnedMoney = not set.AdmodRenderSettings.RenderEarnedMoney; inicfg.save(set, direction)
+                                                                    end
+                                                                else
+                                                                    sampCloseCurrentDialogWithButton(0); show_dialog_6409 = true
+                                                                end
+                                                            end
+                                                        end
+                                                    else
+                                                        sampAddChatMessage(cyr("Для кастомизации рендера ADMOD'а, необходимо его включить."), -1)
+                                                    end
                                                 end
+                                            else
+                                                sampCloseCurrentDialogWithButton(0); show_main_dialog = true; show_dialog_6409 = false
                                             end
-                                        else
-                                            sampCloseCurrentDialogWithButton(0); boolShowMenu = true; show6409 = false
                                         end
                                     end
                                 end
+                                wait(5)
                             end
                         else
                             sampCloseCurrentDialogWithButton(0)
-                            boolShowMenu = false
-                            scriptDialogsWorking = false
+                            show_main_dialog = false
+                            is_script_dialogs_working = false
                         end
                     end
                 end
@@ -378,7 +372,7 @@ if isSampLoaded() and isSampfuncsLoaded() then
                             noAdmodInfo = false; break
                         end
                     end
-                    if noAdmodInfo and not scriptDialogsWorking then
+                    if noAdmodInfo and not is_script_dialogs_working then
                         sampAddChatMessage(cyr("Автоматический /admod отклонен, открыто другое диалоговое окно."), -1)
                     end
                 end
