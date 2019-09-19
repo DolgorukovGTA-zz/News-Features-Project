@@ -2,11 +2,8 @@ script_author("dolgorukov")
 script_version("16.09.2019")
 
 local script = thisScript()
-
 if isSampLoaded() and isSampfuncsLoaded() then
-
     local script_name = script.name
-
     if script_name ~= "News Features.lua" then
         sampAddChatMessage(cyr("Скрипт будет выгружен, так как его оригинальное название было переименовано."), -1)
         sampAddChatMessage(cyr("Поменяйте название на исходное и перезапустите скрипт."), -1)
@@ -32,7 +29,6 @@ if isSampLoaded() and isSampfuncsLoaded() then
         local encoding = require "encoding"
         encoding.default = "UTF-8"
         local cyr = encoding.CP1251
-
         local result_samp_lua = doesSampLuaExist()
         if not result_samp_lua then
             sampAddChatMessage(cyr("Модуль SAMP.Lua не установлен, либо находится в неполном объёме."), -1)
