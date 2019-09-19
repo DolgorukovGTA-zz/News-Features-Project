@@ -75,12 +75,14 @@ if isSampLoaded() and isSampfuncsLoaded() then
                 while not isSampAvailable() do wait(100) end
                 local json_file_url = "https://raw.githubusercontent.com/DolgorukovGTA/News-Features-Project/master/script-update.json"
                 local script_file_url = "https://raw.githubusercontent.com/DolgorukovGTA/News-Features-Project/master/News%20Features.lua"
-                autoupdate(json_file_url, "["..script_name.."]: ", script_file_url)
+                autoupdate(json_file_url, "["..script_name.."]:", script_file_url)
 
                 sampRegisterChatCommand("nhelp", function()
                     if isPlayerOnTrinity() then
                         if sampIsDialogActive() then
                             sampAddChatMessage(cyr("Закройте текущие диалоговые окна для открытия нового."), -1)
+                        elseif not sampIsLocalPlayerSpawned() then
+                            sampAddChatMessage(cyr("Дождитесь, пока Ваш персонаж будет заспавнен."), -1)
                         elseif isSampfuncsConsoleActive() then 
                             sampAddChatMessage(cyr("Закройте консоль SAMPFUNCS перед открытием диалогового окна."), -1)
                         else 
@@ -427,7 +429,7 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                                 end
                                             end
                                         end
-                                        wait(15)
+                                        wait(0)
                                     end
                                 else
                                     sampCloseCurrentDialogWithButton(0)
@@ -436,7 +438,7 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                 end
                             end
                         end
-                        wait(15)
+                        wait(0)
                     end  
                 end)
             end
@@ -518,11 +520,11 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                     lua_thread.create(function(prefix)
                                         local dlstatus = require("moonloader").download_status
                                         local color = -1
-                                        sampAddChatMessage(cyr((prefix.."Обнаружено обновление. Попытка обновить версию с "..thisScript().version.." на "..updateversion..".")), color)
+                                        sampAddChatMessage(cyr((prefix.." Обнаружено обновление. Попытка обновить версию с "..thisScript().version.." на "..updateversion..".")), color)
                                         wait(250)
                                         downloadUrlToFile(updatelink, thisScript().path, function(id3, status1, p13, p23)
                                             if status1 == dlstatus.STATUS_ENDDOWNLOADDATA then
-                                                sampAddChatMessage(cyr((prefix.."Обновление завершено!")), color)
+                                                sampAddChatMessage(cyr((prefix.." Обновление завершено!")), color)
                                                 goupdatestatus = true
                                                 lua_thread.create(function() wait(500) thisScript():reload() end)
                                             elseif status1 == dlstatus.STATUSEX_ENDDOWNLOAD then
@@ -535,11 +537,11 @@ if isSampLoaded() and isSampfuncsLoaded() then
                                     end, prefix)
                                 else
                                     update = false
-                                    sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – обновление не требуется."), -1)
+                                    sampAddChatMessage(cyr(prefix.." v"..thisScript().version.." – обновление не требуется."), -1)
                                 end
                             end
                         else
-                            sampAddChatMessage(cyr(prefix.."v"..thisScript().version.." – не получилось обработать информацию о новых обновлениях."), -1)
+                            sampAddChatMessage(cyr(prefix.." v"..thisScript().version.." – не получилось обработать информацию о новых обновлениях."), -1)
                             update = false
                         end -- does file exist
                     end -- status == dlstatus.STATUSEX_ENDDOWNLOAD
